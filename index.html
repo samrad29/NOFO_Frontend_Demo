@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOFO Backend Test Console</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">NOFO <span>test console</span></div>
+
+  <div class="topbar-status">
+    <button class="pill" id="health-pill" title="Check GET /health">
+      <span class="dot" id="health-dot"></span><span id="health-text">backend unknown</span>
+    </button>
+    <span class="pill muted" id="api-base-pill">—</span>
+  </div>
+
+  <div class="topbar-right">
+    <div class="session" id="session-box">
+      <span class="session-email" id="session-email">signed out</span>
+      <span class="session-exp" id="session-exp"></span>
+    </div>
+    <button class="btn btn-ghost" id="btn-refresh-token" title="Exchange refresh token for a new access token">Refresh</button>
+    <button class="btn btn-ghost" id="btn-signout">Sign out</button>
+    <button class="btn btn-ghost" id="btn-toggle-log" title="Toggle request log">Log</button>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-group">
+      <div class="nav-label">Connection</div>
+      <button class="nav-item" data-view="setup">Setup</button>
+      <button class="nav-item" data-view="auth">Authentication</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Account</div>
+      <button class="nav-item" data-view="account">Me &amp; profile</button>
+      <button class="nav-item" data-view="reference">Reference data</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Workspaces</div>
+      <button class="nav-item" data-view="teams">Teams</button>
+      <button class="nav-item" data-view="members">Members &amp; invites</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Core features</div>
+      <button class="nav-item" data-view="goals">Goals</button>
+      <button class="nav-item" data-view="matches">Matches</button>
+      <button class="nav-item" data-view="saved">Saved grants</button>
+      <button class="nav-item" data-view="notifications">Notifications</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Escape hatch</div>
+      <button class="nav-item" data-view="raw">Raw request</button>
+    </div>
+
+    <div class="nav-context">
+      <div class="nav-label">Active context</div>
+      <div class="ctx-row"><span>team_id</span><b id="ctx-team">—</b></div>
+      <div class="ctx-row"><span>goal_id</span><b id="ctx-goal">—</b></div>
+      <div class="ctx-row"><span>saved_id</span><b id="ctx-saved">—</b></div>
+      <div class="ctx-row"><span>opportunity_id</span><b id="ctx-opp" class="trunc">—</b></div>
+      <button class="btn btn-ghost btn-tiny" id="btn-clear-ctx">Clear context</button>
+    </div>
+  </nav>
+
+  <main class="main" id="main"></main>
+
+  <aside class="logpanel" id="logpanel">
+    <div class="logpanel-head">
+      <span>Request log</span>
+      <span class="grow"></span>
+      <button class="btn btn-ghost btn-tiny" id="btn-clear-log">Clear</button>
+    </div>
+    <div class="logpanel-body" id="log-body">
+      <div class="empty">No requests yet.</div>
+    </div>
+  </aside>
+
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

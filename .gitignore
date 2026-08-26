@@ -1,0 +1,19 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Python, if you use http.server or add tooling here
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Nothing is built, but keep these out if tooling is ever added
+node_modules/
+dist/
