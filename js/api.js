@@ -221,3 +221,107 @@ export async function streamGoal(body, onEvent) {
     error: failed ? failed.message : undefined,
   };
 }
+
+/**
+ * POST /api/jobs/nightly streams server-sent events as each pipeline step runs.
+ * The full nightly can take several minutes — individual steps are safer on
+ * a short server timeout.
+ *
+ * @param {object} body            {steps?: string[]}
+ * @param {(event: object) => void} onEvent
+ * @returns {Promise<ApiResult>}
+ */
+export async function streamNightly(body, onEvent) {
+  const url = buildUrl('/api/jobs/nightly');
+  const started = performance.now();
+  const events = [];
+
+  if (!getToken()) {
+    const error = 'Not signed in. Sign in on the Authentication tab first.';
+    pushLog({ method: 'POST', path: '/api/jobs/nightly', status: 0, ms: 0, ok: false, request: body, response: error });
+    return { ok: false, status: 0, data: null, ms: 0, method: 'POST', path: '/api/jobs/nightly', error };
+  }
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { ...authHeaders(true), 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      body: JSON.stringify(body),
+      mode: 'cors',
+    });
+  } catch (err) {
+    const ms = Math.round(performance.now() - started);
+    const error = `Could not reach ${url} — ${err.message}.`;
+    pushLog({ method: 'POST', path: '/api/jobs/nightly', status: 0, ms, ok: false, request: body, response: error });
+    return { ok: false, status: 0, data: null, ms, method: 'POST', path: '/api/jobs/nightly', error };
+  }
+
+  const type = response.headers.get('content-type') || '';
+
+  if (!response.ok || !type.includes('text/event-stream')) {
+    const text = await response.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+    const ms = Math.round(performance.now() - started);
+    pushLog({ method: 'POST', path: '/api/jobs/nightly', status: response.status, ms, ok: response.ok, request: body, response: data });
+    return {
+      ok: response.ok, status: response.status, data, ms,
+      method: 'POST', path: '/api/jobs/nightly',
+      error: response.ok ? undefined : (data?.error || `HTTP ${response.status}`),
+    };
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const drain = (chunk) => {
+    for (const line of chunk.split('\n')) {
+      if (!line.startsWith('data:')) continue;
+      const raw = line.slice(5).trim();
+      if (!raw) continue;
+      let event;
+      try { event = JSON.parse(raw); } catch { event = { stage: 'raw', message: raw }; }
+      events.push(event);
+      try { onEvent?.(event); } catch (e) { console.error(e); }
+    }
+  };
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let split;
+      while ((split = buffer.indexOf('\n\n')) >= 0) {
+        drain(buffer.slice(0, split));
+        buffer = buffer.slice(split + 2);
+      }
+    }
+    if (buffer.trim()) drain(buffer);
+  } catch (err) {
+    const ms = Math.round(performance.now() - started);
+    const error = `Stream broke after ${events.length} event(s) — ${err.message}`;
+    pushLog({ method: 'POST', path: '/api/jobs/nightly', status: response.status, ms, ok: false, request: body, response: { error, events } });
+    return { ok: false, status: response.status, data: { events }, ms, method: 'POST', path: '/api/jobs/nightly', error };
+  }
+
+  const ms = Math.round(performance.now() - started);
+  const failed = events.find((e) => e.stage === 'error');
+
+  pushLog({
+    method: 'POST', path: '/api/jobs/nightly', status: response.status, ms,
+    ok: !failed, request: body, response: { events },
+  });
+
+  return {
+    ok: !failed,
+    status: response.status,
+    data: { events },
+    ms,
+    method: 'POST',
+    path: '/api/jobs/nightly',
+    error: failed ? failed.message : undefined,
+  };
+}

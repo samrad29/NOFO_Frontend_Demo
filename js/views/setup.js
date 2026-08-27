@@ -1,6 +1,15 @@
-import { h, viewHead, sectionLabel, note, card, toast, jsonBlock } from '../dom.js';
+import { h, viewHead, sectionLabel, note, card, toast, jsonBlock, clear } from '../dom.js';
 import { getConfig, setConfig, resetConfig } from '../store.js';
 import * as api from '../api.js';
+
+const NIGHTLY_STEPS = [
+  ['ingest', 'Fetch from Simpler and upsert grants.'],
+  ['embed', 'Embed anything that arrived without a vector.'],
+  ['verdicts', 'Judge eligibility and liveness for new grants.'],
+  ['changes', 'Diff snapshots and notify followers of material updates.'],
+  ['recurrence', 'Detect watched programs producing a new opportunity.'],
+  ['goals', 'Match existing goals against grants that arrived since last run.'],
+];
 
 export function render(root) {
   const cfg = getConfig();
@@ -117,6 +126,88 @@ export function render(root) {
     },
   }));
 
+  /* ---------------- pipeline jobs ---------------- */
+
+  root.append(sectionLabel('Pipeline jobs'));
+
+  root.append(note(
+    'The nightly pipeline normally runs unattended. These routes trigger it by hand — sign in first. ' +
+    'They use <code>DATABASE_URL</code> and the pipeline API keys, not the app connection. A full run can ' +
+    'take several minutes; on Render, pick individual steps if the request times out.',
+  ));
+
+  root.append(card({
+    method: 'GET',
+    path: '/api/jobs/pipeline-health',
+    title: 'pipeline step health',
+    desc: 'Last run, status, duration, and whether each step is overdue.',
+    action: 'Load health',
+    run: async (_v, result) => {
+      const res = await api.get('/api/jobs/pipeline-health');
+      result.render(res);
+    },
+  }));
+
+  const stream = h('div', { class: 'stream' });
+
+  root.append(card({
+    method: 'POST',
+    path: '/api/jobs/nightly',
+    title: 'run nightly pipeline (streaming)',
+    desc: 'Runs the selected steps in order and streams progress as each one finishes.',
+    action: 'Run selected steps',
+    fields: NIGHTLY_STEPS.map(([name, hint]) => ({
+      name,
+      label: name,
+      type: 'checkbox',
+      value: true,
+      wide: true,
+      hint,
+    })),
+    extra: (body) => body.append(stream),
+    run: async (v, result) => {
+      const steps = NIGHTLY_STEPS.map(([name]) => name).filter((name) => v[name]);
+      if (!steps.length) {
+        result.message('Select at least one step.', true);
+        return;
+      }
+
+      clear(stream);
+      stream.classList.add('show');
+      result.clear();
+
+      const started = performance.now();
+      const addRow = (stage, message, isError = false) => {
+        stream.append(h('div', { class: 'stream-row' + (isError ? ' is-error' : '') },
+          h('span', { class: 'stream-stage', text: stage }),
+          h('span', { class: 'stream-msg', text: message }),
+          h('span', { class: 'grow' }),
+          h('span', { class: 'result-meta', text: `${Math.round(performance.now() - started)} ms` })));
+        stream.scrollTop = stream.scrollHeight;
+      };
+
+      const res = await api.streamNightly({ steps }, (event) => {
+        if (event.stage === 'starting') {
+          addRow(event.step, 'running…');
+        } else if (event.stage === 'done') {
+          addRow(event.step, 'ok');
+        } else if (event.stage === 'error') {
+          addRow(event.step, event.message || 'failed', true);
+        } else if (event.stage === 'health') {
+          addRow('health', `${(event.rows || []).length} step(s) summarized`);
+        }
+      });
+
+      if (res.ok) {
+        toast('Pipeline run finished');
+        result.render(res);
+      } else {
+        toast(res.error || 'Pipeline run failed', true);
+        result.render(res);
+      }
+    },
+  }));
+
   /* ---------------- reference ---------------- */
 
   root.append(sectionLabel('What this console covers'));
@@ -124,7 +215,7 @@ export function render(root) {
   root.append(h('div', { class: 'card open' }, h('div', { class: 'card-body' },
     h('div', { class: 'card-desc', text: 'Every route the backend exposes, and the tab that exercises it.' }),
     jsonBlock({
-      'Setup': ['GET /health'],
+      'Setup': ['GET /health', 'GET /api/jobs/pipeline-health', 'POST /api/jobs/nightly (SSE)'],
       'Authentication': ['Supabase signup / token / refresh / logout / recover / user'],
       'Me & profile': ['GET /api/me', 'POST /api/profile'],
       'Reference data': ['GET /api/organizations', 'GET /api/categories'],

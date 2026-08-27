@@ -5,6 +5,8 @@ import { decodeJwt } from '../auth.js';
 
 const ROUTES = [
   ['GET', '/health'],
+  ['GET', '/api/jobs/pipeline-health'],
+  ['POST', '/api/jobs/nightly'],
   ['GET', '/api/me'],
   ['POST', '/api/profile'],
   ['GET', '/api/organizations?q=nav'],
