@@ -15,6 +15,7 @@ import * as referenceView from './views/reference.js';
 import * as teamsView from './views/teams.js';
 import * as membersView from './views/members.js';
 import * as goalsView from './views/goals.js';
+import * as searchView from './views/search.js';
 import * as matchesView from './views/matches.js';
 import * as savedView from './views/saved.js';
 import * as notificationsView from './views/notifications.js';
@@ -28,6 +29,7 @@ const VIEWS = {
   teams: teamsView,
   members: membersView,
   goals: goalsView,
+  search: searchView,
   matches: matchesView,
   saved: savedView,
   notifications: notificationsView,

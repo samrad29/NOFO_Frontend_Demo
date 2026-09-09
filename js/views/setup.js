@@ -219,6 +219,7 @@ export function render(root) {
       'Authentication': ['Supabase signup / token / refresh / logout / recover / user'],
       'Me & profile': ['GET /api/me', 'POST /api/profile'],
       'Reference data': ['GET /api/organizations', 'GET /api/categories'],
+      'Search': ['GET /api/grants/search'],
       'Teams': ['GET /api/teams', 'POST /api/teams', 'PATCH /api/teams/:id', 'GET /api/teams/:id/grants'],
       'Members & invites': [
         'GET /api/teams/:id/roster', 'PATCH /api/teams/:id/members/:user_id',

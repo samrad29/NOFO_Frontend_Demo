@@ -68,10 +68,11 @@ A reasonable smoke test, in order:
 2. **Authentication** — sign up or sign in, then verify the backend accepts the token.
 3. **Me & profile** — save a profile (only `display_name` is required).
 4. **Teams** — create a team with a category or two from **Reference data**, then load its grants.
-5. **Goals** — create a goal. This streams progress over SSE and takes a few seconds.
-6. **Matches** — look at what the goal matched; click `save` on a row to grab its `opportunity_id`.
-7. **Saved grants** — save it to the team, then walk it through the status pipeline.
-8. **Notifications** — check the inbox and the workspace activity feed.
+5. **Search** — try a phrase (`tribal broadband`), a one-word keyword, an opportunity number, an assistance listing, or a Grants.gov legacy id.
+6. **Goals** — create a goal. This streams progress over SSE and takes a few seconds.
+7. **Matches** — look at what the goal matched; click `save` on a row to grab its `opportunity_id`.
+8. **Saved grants** — save it to the team, then walk it through the status pipeline.
+9. **Notifications** — check the inbox and the workspace activity feed.
 
 The **Raw request** tab will send any method to any path with any JSON body, and includes an
 index of every route with a one-click load into the runner.
@@ -96,6 +97,7 @@ js/
     reference.js      categories, organization lookup
     teams.js          team CRUD and a team's visible grants
     members.js        roster, roles, ownership transfer, invites
+    search.js         GET /api/grants/search — identifier and hybrid retrieval
     goals.js          goal creation over SSE, goal lists, subscriptions
     matches.js        goal and team match feeds, dismissal
     saved.js          watchlists and the status pipeline
@@ -113,6 +115,9 @@ Things worth knowing when a response looks wrong rather than broken:
 - **`POST /api/goals` is server-sent events, not JSON.** Validation failures still come back as
   ordinary JSON, so the console handles both.
 - **A team with no categories sees no grants.** The response sets `needs_categories` to say so.
+- **`GET /api/grants/search` is corpus-wide**, not filtered by a team's categories. Identifier
+  queries can return closed grants (`is_stale`); text queries only return live ones. One-word
+  text queries skip the embedding path.
 - **Personal goals cannot be unfollowed** — `DELETE /api/goals/:id/subscription` answers `400`.
 - **Archiving a goal is soft** (`is_active = false`), but deleting a saved grant is a hard delete.
   Use `PATCH /api/saved/:id` with `archived: true` if you want to keep the row.

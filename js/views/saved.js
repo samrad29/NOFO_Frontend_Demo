@@ -67,7 +67,7 @@ export function render(root) {
     method: 'POST',
     path: '/api/teams/:team_id/saved',
     title: 'add a grant to a team’s watchlist',
-    desc: 'Needs an opportunity_id — grab one from the Matches tab or a team’s grants list, which sets it as the active id.',
+    desc: 'Needs an opportunity_id — grab one from Search, Matches, or a team’s grants list, which sets it as the active id.',
     action: 'Save grant',
     fields: [
       { name: 'team_id', label: 'team_id', type: 'number', required: true, ctxKey: 'teamId' },
