@@ -1,7 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, idCell, miniButton, stats, fmtDate, shorten } from '../dom.js';
 import { setCtx, getCtx, getToken } from '../store.js';
 import * as api from '../api.js';
-import { grantColumns } from './shared.js';
+import { grantColumns, viewGrantButton } from './shared.js';
 
 const STATUSES = ['saved', 'pursuing', 'submitted', 'awarded', 'declined'];
 
@@ -213,6 +213,7 @@ export function render(root) {
           saved: 'pursuing', pursuing: 'submitted', submitted: 'awarded',
         }[r.status];
         return h('div', { class: 'cell-actions' },
+          viewGrantButton(r),
           next ? miniButton(`→ ${next}`, async () => {
             const res = await api.patch(`/api/saved/${r.id}`, { status: next });
             toast(res.ok ? `Now ${next}` : res.error, !res.ok);

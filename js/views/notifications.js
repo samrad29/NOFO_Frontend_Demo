@@ -1,6 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, idCell, miniButton, stats, fmtDate, jsonBlock } from '../dom.js';
 import { getCtx, getToken } from '../store.js';
 import * as api from '../api.js';
+import { viewGrantButton } from './shared.js';
 
 export function render(root) {
   root.append(viewHead(
@@ -90,6 +91,7 @@ export function render(root) {
             r.goal_id ? idCell(r.goal_id, 'goalId', `goal ${r.goal_id}`) : null,
             r.saved_grant_id ? idCell(r.saved_grant_id, 'savedId', `saved ${r.saved_grant_id}`) : null,
             r.opportunity_id ? idCell(r.opportunity_id, 'opportunityId', 'opportunity') : null,
+            r.opportunity_id ? viewGrantButton(r) : null,
           ) },
           { label: 'delivered', cls: 'mono', render: (r) => fmtDate(r.delivered_at) },
           { label: '', render: (r) => h('div', { class: 'cell-actions' },
@@ -187,6 +189,7 @@ export function render(root) {
             r.goal_id ? idCell(r.goal_id, 'goalId', `goal ${r.goal_id}`) : null,
             r.saved_grant_id ? idCell(r.saved_grant_id, 'savedId', `saved ${r.saved_grant_id}`) : null,
             r.opportunity_id ? idCell(r.opportunity_id, 'opportunityId', 'opportunity') : null,
+            r.opportunity_id ? viewGrantButton(r) : null,
           ) },
           { label: 'created', cls: 'mono', render: (r) => fmtDate(r.created_at) },
         ], rows, { empty: 'No activity for this workspace yet.' }),

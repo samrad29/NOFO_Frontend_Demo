@@ -1,7 +1,8 @@
 // Grant rows come back from several routes (team grants, goal matches, saved
 // grants) with the same joined columns, so they render the same way.
 
-import { h, tag, fmtMoney, idCell, shorten } from '../dom.js';
+import { h, tag, fmtMoney, idCell, shorten, miniButton } from '../dom.js';
+import { setCtx } from '../store.js';
 
 export function deadlineCell(row) {
   const state = row.deadline_state || '—';
@@ -59,6 +60,17 @@ export function verdictCell(row) {
         text: Number(row.similarity).toFixed(3) })
       : null,
   );
+}
+
+/** Open the Grant tab on this opportunity. Reloads if that tab is already showing. */
+export function openGrant(opportunityId) {
+  if (!opportunityId) return;
+  setCtx('opportunityId', opportunityId);
+  if ((location.hash || '').slice(1) !== 'grant') location.hash = '#grant';
+}
+
+export function viewGrantButton(row) {
+  return miniButton('view', () => openGrant(row.opportunity_id));
 }
 
 /** Category slugs are sent as an array but are far easier to type as a list. */

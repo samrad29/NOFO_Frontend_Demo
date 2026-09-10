@@ -1,7 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, miniButton, stats } from '../dom.js';
 import { setCtx } from '../store.js';
 import * as api from '../api.js';
-import { grantColumns } from './shared.js';
+import { grantColumns, viewGrantButton } from './shared.js';
 
 const EXAMPLES = [
   ['tribal broadband', 'hybrid: full-text plus embedding'],
@@ -132,10 +132,13 @@ export function render(root) {
           ...grantColumns(),
           {
             label: '',
-            render: (r) => miniButton('save', () => {
-              setCtx('opportunityId', r.opportunity_id);
-              toast('opportunity_id set — open the Saved grants tab');
-            }),
+            render: (r) => h('div', { class: 'cell-actions' },
+              viewGrantButton(r),
+              miniButton('save', () => {
+                setCtx('opportunityId', r.opportunity_id);
+                toast('opportunity_id set — open the Saved grants tab');
+              }),
+            ),
           },
         ], rows, { empty: 'No grants matched this query.' }),
       );

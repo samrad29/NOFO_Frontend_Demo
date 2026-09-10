@@ -1,7 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, idCell, stats, miniButton } from '../dom.js';
 import { setCtx, getToken } from '../store.js';
 import * as api from '../api.js';
-import { grantColumns, parseList } from './shared.js';
+import { grantColumns, parseList, viewGrantButton } from './shared.js';
 
 export function render(root) {
   root.append(viewHead(
@@ -169,11 +169,17 @@ export function render(root) {
       }
 
       nodes.push(h('div', { class: 'section-label', text: 'Grants' }));
-      nodes.push(table(grantColumns(), grants, { empty: 'No open grants for these categories.' }));
+      nodes.push(table([
+        ...grantColumns(),
+        { label: '', render: viewGrantButton },
+      ], grants, { empty: 'No open grants for these categories.' }));
 
       if (closing.length) {
         nodes.push(h('div', { class: 'section-label', text: 'Closing soon' }));
-        nodes.push(table(grantColumns(), closing));
+        nodes.push(table([
+          ...grantColumns(),
+          { label: '', render: viewGrantButton },
+        ], closing));
       }
 
       result.custom(...nodes);

@@ -12,6 +12,7 @@ const ROUTES = [
   ['GET', '/api/organizations?q=nav'],
   ['GET', '/api/categories'],
   ['GET', '/api/grants/search?q=tribal+broadband&limit=20'],
+  ['GET', '/api/grants/<opportunity_id>'],
   ['GET', '/api/teams'],
   ['POST', '/api/teams'],
   ['PATCH', '/api/teams/1'],

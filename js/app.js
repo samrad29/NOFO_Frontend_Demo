@@ -16,6 +16,7 @@ import * as teamsView from './views/teams.js';
 import * as membersView from './views/members.js';
 import * as goalsView from './views/goals.js';
 import * as searchView from './views/search.js';
+import * as grantView from './views/grant.js';
 import * as matchesView from './views/matches.js';
 import * as savedView from './views/saved.js';
 import * as notificationsView from './views/notifications.js';
@@ -30,6 +31,7 @@ const VIEWS = {
   members: membersView,
   goals: goalsView,
   search: searchView,
+  grant: grantView,
   matches: matchesView,
   saved: savedView,
   notifications: notificationsView,

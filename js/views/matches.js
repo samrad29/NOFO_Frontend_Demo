@@ -1,7 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, idCell, miniButton, stats, fmtDate } from '../dom.js';
 import { setCtx, getCtx, getToken } from '../store.js';
 import * as api from '../api.js';
-import { grantColumns, verdictCell } from './shared.js';
+import { grantColumns, verdictCell, viewGrantButton } from './shared.js';
 
 export function render(root) {
   root.append(viewHead(
@@ -101,6 +101,7 @@ export function render(root) {
         { label: 'reason', render: (r) => h('span', { class: 'clip', title: r.reason || '', text: r.reason || '—' }) },
         { label: 'matched', cls: 'mono', render: (r) => fmtDate(r.matched_at) },
         { label: '', render: (r) => h('div', { class: 'cell-actions' },
+          viewGrantButton(r),
           miniButton('save', () => {
             setCtx('opportunityId', r.opportunity_id);
             toast('opportunity_id set — open the Saved grants tab');

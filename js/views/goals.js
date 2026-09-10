@@ -1,7 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, toast, idCell, miniButton, clear, stats } from '../dom.js';
 import { setCtx, getToken } from '../store.js';
 import * as api from '../api.js';
-import { grantColumns, verdictCell } from './shared.js';
+import { grantColumns, verdictCell, viewGrantButton } from './shared.js';
 
 const STAGE_LABELS = {
   created: 'goal written',
@@ -131,6 +131,7 @@ export function render(root) {
           { label: 'verdict', render: verdictCell },
           ...grantColumns(),
           { label: 'reason', render: (r) => h('span', { class: 'clip', title: r.reason || '', text: r.reason || '—' }) },
+          { label: '', render: viewGrantButton },
         ], results.grants || [], { empty: 'The matcher found nothing for this goal.' }));
         toast(`Goal ${results.goal_id} matched ${(results.grants || []).length} grant(s)`);
         listCard.cardApi.trigger();
