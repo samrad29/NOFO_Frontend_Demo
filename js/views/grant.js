@@ -1,6 +1,7 @@
 import { h, viewHead, sectionLabel, note, card, table, tag, jsonBlock, stats, fmtMoney } from '../dom.js';
 import { getCtx, getToken, on, setCtx } from '../store.js';
 import * as api from '../api.js';
+import { grantColumns, viewGrantButton } from './shared.js';
 
 // Keys a real grant-detail page would need. The rest of the record is useful
 // but these are the ones whose absence would make the page feel unfinished.
@@ -253,7 +254,7 @@ export function render(root) {
 
   root.append(note(
     'This reads <code>GET /api/grants/&lt;opportunity_id&gt;</code>, which returns every flattened column plus assistance listings and the original Simpler.Grants payload under <code>raw</code>. ' +
-    'Closed and dormant grants are included. Grab an id from Search, Matches, or a team grants list — the <b>view</b> button on those rows opens this tab.',
+    'Closed and dormant grants are included. <b>Find similar</b> loads live neighbors of that grant (stored embedding, no model call), split into enough lead time vs closing soon.',
   ));
 
   root.append(sectionLabel('Load a grant'));
@@ -289,8 +290,82 @@ export function render(root) {
   });
   root.append(loadCard);
 
+  root.append(sectionLabel('Find similar'));
+
+  const similarCard = card({
+    method: 'GET',
+    path: '/api/grants/:opportunity_id/similar',
+    title: 'live neighbors, split by lead time',
+    desc: 'Uses the stored embedding — no model call. Neighbors are live even if this grant has closed. Closing-soon is a second list, not a filter. Pass team_id to use that workspace’s lead time; otherwise min_days_to_deadline defaults to 30.',
+    open: true,
+    action: 'Find similar',
+    fields: [
+      {
+        name: 'opportunity_id',
+        label: 'opportunity_id',
+        required: true,
+        wide: true,
+        ctxKey: 'opportunityId',
+        placeholder: 'uuid',
+      },
+      { name: 'team_id', label: 'team_id', type: 'number', ctxKey: 'teamId', hint: 'Optional. Uses the team’s min_days_to_deadline when set.' },
+      { name: 'min_days_to_deadline', label: 'min_days_to_deadline', type: 'number', value: 30 },
+      { name: 'limit', label: 'limit', type: 'number', value: 20 },
+    ],
+    run: async (v, result) => {
+      const id = v.opportunity_id.trim();
+      if (!id) { result.message('opportunity_id is required.', true); return; }
+
+      const query = {};
+      if (v.limit !== '') query.limit = v.limit;
+      if (v.team_id !== '') query.team_id = v.team_id;
+      else if (v.min_days_to_deadline !== '') query.min_days_to_deadline = v.min_days_to_deadline;
+
+      const res = await api.get(`/api/grants/${encodeURIComponent(id)}/similar`, query);
+      if (!res.ok) { result.render(res); return; }
+
+      const d = res.data || {};
+      const similar = d.similar || [];
+      const closing = d.closing_soon || [];
+
+      const simCol = {
+        label: 'similarity',
+        cls: 'mono',
+        render: (r) => (r.similarity == null ? '—' : Number(r.similarity).toFixed(3)),
+      };
+
+      result.custom(
+        h('div', { class: 'result-head' },
+          h('span', { class: 'status ok', text: res.status }),
+          h('span', { class: 'result-meta', text: `${res.ms} ms` }),
+          h('span', { class: 'result-meta', text: `lead time ${d.lead_time_days ?? '—'}d` }),
+          d.team_id ? tag(`team ${d.team_id}`) : null),
+        stats([
+          ['similar', similar.length],
+          ['closing soon', closing.length],
+        ]),
+        h('div', { class: 'section-label', text: 'Similar' }),
+        table([
+          simCol,
+          ...grantColumns(),
+          { label: '', render: viewGrantButton },
+        ], similar, { empty: 'No live neighbors above the similarity floor with enough lead time.' }),
+        h('div', { class: 'section-label', text: 'Closing soon' }),
+        table([
+          simCol,
+          ...grantColumns(),
+          { label: '', render: viewGrantButton },
+        ], closing, { empty: 'None of the neighbors close sooner than the lead time.' }),
+      );
+    },
+  });
+  root.append(similarCard);
+
   if (getToken() && last) {
-    requestAnimationFrame(() => loadCard.cardApi.trigger());
+    requestAnimationFrame(() => {
+      loadCard.cardApi.trigger();
+      similarCard.cardApi.trigger();
+    });
   }
 
   const off = on('ctx', () => {
@@ -298,7 +373,10 @@ export function render(root) {
     const id = getCtx('opportunityId');
     if (id === last) return;
     last = id;
-    if (id && getToken()) loadCard.cardApi.trigger();
+    if (id && getToken()) {
+      loadCard.cardApi.trigger();
+      similarCard.cardApi.trigger();
+    }
   });
   root.addEventListener('view:teardown', off);
 }

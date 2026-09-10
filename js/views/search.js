@@ -42,7 +42,8 @@ export function render(root) {
     'An opportunity number (<code>HRSA-27-021</code>), assistance listing (<code>14.867</code>), or Grants.gov ' +
     'legacy id (<code>362729</code>) is an exact match — closed grants are included and flagged <code>is_stale</code>. ' +
     'Anything else is hybrid: title-weighted full-text first, then (for two or more words) a semantic neighbor search. ' +
-    'One-word queries skip embeddings. This is not scoped to a team’s categories.',
+    'One-word queries skip embeddings. This is not scoped to a team’s categories. ' +
+    'Grants closing in under 30 days still appear — they sort below equally targeted hits with more lead time, and the deadline cell badges them <code>soon</code>. Identifier lookups are not reordered.',
   ));
 
   root.append(sectionLabel('Find grants'));

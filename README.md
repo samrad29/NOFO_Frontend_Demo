@@ -69,7 +69,7 @@ A reasonable smoke test, in order:
 3. **Me & profile** — save a profile (only `display_name` is required).
 4. **Teams** — create a team with a category or two from **Reference data**, then load its grants.
 5. **Search** — try a phrase (`tribal broadband`), a one-word keyword, an opportunity number, an assistance listing, or a Grants.gov legacy id. Click **view** on a row to open the Grant tab.
-6. **Grant** — inspect the full record: summary, dates, eligibility, listings, and whether ingestion dropped any source fields.
+6. **Grant** — inspect the full record: summary, dates, eligibility, listings, and whether ingestion dropped any source fields. **Find similar** loads live neighbors, split into enough-time vs closing-soon.
 7. **Goals** — create a goal. This streams progress over SSE and takes a few seconds.
 8. **Matches** — look at what the goal matched; click `save` on a row to grab its `opportunity_id`.
 9. **Saved grants** — save it to the team, then walk it through the status pipeline.
@@ -99,7 +99,7 @@ js/
     teams.js          team CRUD and a team's visible grants
     members.js        roster, roles, ownership transfer, invites
     search.js         GET /api/grants/search — identifier and hybrid retrieval
-    grant.js          GET /api/grants/:id — full grant record and source-payload gaps
+    grant.js          GET /api/grants/:id — full grant record, similar neighbors, source-payload gaps
     goals.js          goal creation over SSE, goal lists, subscriptions
     matches.js        goal and team match feeds, dismissal
     saved.js          watchlists and the status pipeline
@@ -119,10 +119,14 @@ Things worth knowing when a response looks wrong rather than broken:
 - **A team with no categories sees no grants.** The response sets `needs_categories` to say so.
 - **`GET /api/grants/search` is corpus-wide**, not filtered by a team's categories. Identifier
   queries can return closed grants (`is_stale`); text queries only return live ones. One-word
-  text queries skip the embedding path.
+  text queries skip the embedding path. Grants closing in under 30 days stay in text results;
+  they sort below equally targeted hits with more lead time.
 - **`GET /api/grants/:id` returns the full flattened row**, plus assistance listings and `raw`.
   Closed and dormant grants are included. `visible_in_browse` is false when live search would
   hide the grant.
+- **`GET /api/grants/:id/similar` is live neighbors of that grant**, split into `similar` and
+  `closing_soon`. It needs a stored embedding (`409` if missing). Passing `team_id` uses that
+  workspace's lead time.
 - **Personal goals cannot be unfollowed** — `DELETE /api/goals/:id/subscription` answers `400`.
 - **Archiving a goal is soft** (`is_active = false`), but deleting a saved grant is a hard delete.
   Use `PATCH /api/saved/:id` with `archived: true` if you want to keep the row.

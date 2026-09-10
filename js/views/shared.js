@@ -10,6 +10,7 @@ export function deadlineCell(row) {
   const parts = [tag(state, state === 'open')];
   if (days !== null && days !== undefined) {
     parts.push(h('span', { class: 'result-meta', style: 'margin-left:5px', text: `${days}d` }));
+    if (days < 30) parts.push(tag('soon', true));
   }
   return h('span', {}, parts);
 }
